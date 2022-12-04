@@ -1,6 +1,8 @@
 package com.hy.http;
 
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.hy.http.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,6 +11,7 @@ import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -22,12 +25,12 @@ public class SchedulerTask {
     private String pushUrl;
     @Value("${data-url}")
     private String dataUrl;
-    @Value("${token}")
-    private String token;
+    @Value("${UserAuthorityCode}")
+    private String UserAuthorityCode;
     @Value("${region}")
     private String region;
-    @Value("#{${unit-map}}")
-    private Map<String, String> unitMap;
+    @Value("${points:}")
+    private String[] points;
     private String sep = "_";
 
     @Scheduled(fixedDelayString = "${interval}")
@@ -36,40 +39,37 @@ public class SchedulerTask {
         Result r = this.getRecentData();
 
         Gas g = new Gas();
-        g.setTs(new Date());
         g.setRegion(region);
 
-        if (r.getData() == null || !r.getStatus()) {
+        if (r.getData() == null) {
             return;
         }
 
         for (int i = 0; i < r.getData().size(); i++) {
             DataItem item = r.getData().get(i);
 
-            for (int j = 0; j < item.getParameters().size(); j++) {
-                Param p = item.getParameters().get(j);
+            g.setTs(item.getTimeStamp());
+            g.setPoint(region + sep + item.getTagName());
+            g.setPname(region + sep + item.getTagName());
+            g.setValue(item.getValue());
+            g.setUnit(item.getUnits());
 
-                g.setPoint(region + sep + item.getLineCode() + sep + p.getParaCode());
-                g.setPname(region + sep + item.getLineName() + sep + p.getParaName());
-                g.setValue(p.getParaValue());
-                g.setUnit(unitMap.get(p.getParaCode()));
-
-                WritterResult result = this.addTaos(g);
-                logger.info(result.getMessage());
-            }
+            WritterResult result = this.addTaos(g);
+            logger.info(result.getMessage());
         }
     }
 
     public Result getRecentData() {
-        HttpHeaders requestHeaders = new HttpHeaders();
-        requestHeaders.setContentLength(0);
-        requestHeaders.add("token", token);
+        HttpHeaders headers = new HttpHeaders();
         RestTemplate restTemplate = new RestTemplate();
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(new HashMap(), requestHeaders);
-
-        // 请求服务端添加玩家
-        ResponseEntity<Result> rentity = restTemplate.exchange(dataUrl, HttpMethod.POST, httpEntity, Result.class);
-        return rentity.getBody();
+        headers.add("Content-Type", "application/x-www-form-urlencoded");
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(dataUrl)
+                .queryParam("UserAuthorityCode", UserAuthorityCode)
+                .queryParam("tagsStr", points);
+        HttpEntity<JSONObject> request = new HttpEntity<>(null, headers);
+        ResponseEntity<String> response = restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.POST, request, String.class);
+        Result result = JSON.parseObject(response.getBody(), Result.class);
+        return result;
     }
 
     private WritterResult addTaos(Gas data) {
@@ -94,6 +94,5 @@ public class SchedulerTask {
         WritterResult result = restTemplate.postForObject(pushUrl, r, WritterResult.class);
 
         return result;
-
     }
 }
