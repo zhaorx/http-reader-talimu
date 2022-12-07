@@ -55,7 +55,6 @@ public class SchedulerTask {
             g.setPoint(region + sep + item.getTagName());
             g.setPname(region + sep + item.getTagName());
             g.setValue(item.getValue());
-            g.setUnit(item.getUnits());
             g.setUnit(unitMap.get(item.getTagName()));
 
             WritterResult result = this.addTaos(g);
