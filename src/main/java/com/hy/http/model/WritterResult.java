@@ -6,14 +6,14 @@ public class WritterResult {
     private long num;
     private String message;
 
-    private List<Gas> list;
+    private int code;
 
-    public List<Gas> getList() {
-        return list;
+    public int getCode() {
+        return code;
     }
 
-    public void setList(List<Gas> list) {
-        this.list = list;
+    public void setCode(int code) {
+        this.code = code;
     }
 
     public long getNum() {
