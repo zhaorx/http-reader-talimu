@@ -4,6 +4,7 @@ spring:
 interval: 60000
 data-url: http://10.79.84.183:9001/api/GetTagLastValue
 push-url: http://localhost:6666/gas/add
+push-multi-url: http://localhost:6666/gas/multi/add
 region: talimu
 UserAuthorityCode: A8K2ILP1-37BB-4F5E-B593-BT09KK4K2K1R
 points: ZTYXC190LNJQZ2_LN_TOTALALL;ZTYXC190LNJQZ1_PT9107
