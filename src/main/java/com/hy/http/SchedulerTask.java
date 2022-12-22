@@ -46,22 +46,24 @@ public class SchedulerTask {
         logger.info("starting transfer...");
         List<DataItem> list = this.getRecentData();
 
-        Gas g = new Gas();
-        g.setTs(sdf.format(new Date()));
-        g.setRegion(region);
+
         if (list == null) {
             return;
         }
 
+        String dateStr = sdf.format(new Date());
         List<Gas> addList = new ArrayList<>();
         for (int i = 0; i < list.size(); i++) {
             DataItem item = list.get(i);
 
+            Gas g = new Gas();
+            g.setTs(dateStr);
+            g.setRegion(region);
             g.setPoint(region + sep + item.getTagName());
             g.setPname(region + sep + item.getTagName());
             g.setValue(item.getValue());
             g.setUnit(unitMap.get(item.getTagName()));
-
+            logger.debug("######point_data:" + g.toString());
             addList.add(g);
 
         }
